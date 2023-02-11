@@ -1,17 +1,21 @@
 import json
+from re import X
 from bs4 import BeautifulSoup
 import cbor
+import sys
 
+#parentDirectory = sys.argv[1]
 check = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
 wordList = []
+index1 = dict()
 
 def createIndex():
     # variables
     allTokens = []
-    parentDirectory = "/Users/aniketpratap/Desktop/WEBPAGES_RAW"
+    parentDirectory = "/Users/akbenothman/Desktop/WEBPAGES_RAW"
 
     # open file
-    f = open("/Users/aniketpratap/Desktop/WEBPAGES_RAW/bookkeeping.json")
+    f = open("/Users/akbenothman/Desktop/WEBPAGES_RAW/bookkeeping.json")
 
     # load json
     data = json.load(f)
@@ -27,23 +31,39 @@ def createIndex():
         # create path for file
         path = parentDirectory + "/" + location[0] + "/" + location[1]
 
-        # data_dict = cbor.load(open(path, "rb"))
 
-        # content = data_dict[b'raw_content'][b'value'] if b'raw_content' in data_dict and b'value' in data_dict[b'raw_content'] else ""
 
-        # print(content)
+        # index1 STRUCTURE
+        # { token : { url : { "frequency": int, "bold": int, "header": int, "title": int}}}
 
         with open(path, 'r') as website:
 
             word = ''
             for content in website:
+                webWords = []
                 soup = BeautifulSoup(content, 'html.parser')
                 based = soup.find_all('div')
+                # if bold chunk
+
+                # if header chunk h1 h2 h3
+
+                # if title chunk
+
+                # if div chunk
                 for i in soup:
                     for c in i.text:
                         if c not in check and len(word) > 1:
-                            # wordList.append(word)
-                            print(word, path)
+                            webWords.append(word)
+                            wordList.append(word)
+                            if word in index1:
+                                if url in index1[word]:
+                                    index1[word][url]["frequency"] += 1
+                                else:
+                                    index1[word][url] = {"frequency":1, "bold": 0, "header": 0, "title": 0}
+                            else:
+                                index1[word] = {url:{"frequency":1, "bold": 0, "header": 0}, "title": 0}
+
+
                             word = ''
                         if c in check:
                             word += c.lower()
@@ -52,5 +72,11 @@ def createIndex():
                             # wordCount += 1
                             break
 
+            # by this point index1 is completed
+            # iterate through index1 to create inverted_index with tdif
+
+
+
 
 createIndex()
+# python3 indexer.py /Users/akbenothman/Desktop/WEBPAGES_RAW
