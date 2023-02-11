@@ -1,21 +1,20 @@
 import json
 from re import X
 from bs4 import BeautifulSoup
-import cbor
-import sys
+import os
 
 #parentDirectory = sys.argv[1]
 check = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
 wordList = []
 index1 = dict()
 
-def createIndex():
+def createIndex(commandlineArgument):
     # variables
     allTokens = []
-    parentDirectory = "/Users/akbenothman/Desktop/WEBPAGES_RAW"
+    parentDirectory = commandlineArgument
 
     # open file
-    f = open("/Users/akbenothman/Desktop/WEBPAGES_RAW/bookkeeping.json")
+    f = open(os.path.join(commandlineArgument, "bookkeeping.json"))
 
     # load json
     data = json.load(f)
@@ -30,6 +29,7 @@ def createIndex():
 
         # create path for file
         path = parentDirectory + "/" + location[0] + "/" + location[1]
+        print(path)
 
 
 
@@ -78,5 +78,4 @@ def createIndex():
 
 
 
-createIndex()
-# python3 indexer.py /Users/akbenothman/Desktop/WEBPAGES_RAW
+# python3 main.py /Users/akbenothman/Desktop/WEBPAGES_RAW
