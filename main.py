@@ -6,12 +6,12 @@ import pickle
 from indexer import createIndex
 
 #call indexer passing command line argument
-index = createIndex()
-
-print(index.encode("utf-8"))
+# index = createIndex()
 
 #save to file
-pickle.dump(index, open("indexFile.pickle", "wb"))
+# pickle.dump(index, open("indexFile.pickle", "wb"))
 
 #read from file
 index = pickle.load(open("indexFile.pickle", "rb"))
+
+print(index)

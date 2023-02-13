@@ -34,7 +34,7 @@ def createIndex():
             contents = f.read()
 
             # parse the HTML contents of the file
-            soup = BeautifulSoup(contents, "html.parser")
+            soup = BeautifulSoup(contents, "lxml")
 
             # Get the text
             text = soup.get_text()
