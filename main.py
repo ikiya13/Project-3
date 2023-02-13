@@ -6,7 +6,7 @@ import pickle
 from indexer import createIndex
 
 #call indexer passing command line argument
-index = createIndex(sys.argv[1])
+index = createIndex()
 
 #save to file
 pickle.dump(index, open("indexFile.pickle", "wb"))

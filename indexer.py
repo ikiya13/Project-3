@@ -1,73 +1,52 @@
-import json
-from re import X
-from bs4 import BeautifulSoup
-from nltk.tokenize import word_tokenize, RegexpTokenizer
 import os
+import sys
+import json
+import nltk
+from bs4 import BeautifulSoup
 
-blackList = {'xhtml1', 'img', 'alt', 'xhtml', 'width', 'src', 'png', 'doctype', 'html', 'public', 'tr', 'dtd', 'w3c'}
+# Download the NLTK Punkt tokenizer and the WordNet lemmatizer
+nltk.download("punkt")
+nltk.download("wordnet")
 
-g = RegexpTokenizer(r'[A-Z]*[a-z]*[1-9]*\w+')
+def createIndex():
+    # Dictionary to store the index
+    index = {}
 
-def tokenizeWebpage(path):
-    # variables
-    wordList = []
+    # The directory containing the offline corpus of webpages
+    corpus_dir = sys.argv[1]
 
-    #open webpage
-    page = open(path, "r", encoding="utf8")
+    # Iterate over all the files in the corpus directory
+    jsonData = json.load(open(os.path.join(corpus_dir, "bookkeeping.json")))    
 
-    # Create a single BeautifulSoup object for the entire page
-    soup = BeautifulSoup(page, 'lxml')
-
-    #tokenize page
-    for content in soup.strings:
-        words = g.tokenize(content)
-        for word in words:
-            wordList.append(word.lower())
-
-    return wordList
-
-
-
-
-def createIndex(commandlineArgument):
-    # index1 STRUCTURE
-    # { token : { url : { "frequency": int, "bold": int, "header": int, "title": int}}}
-    index1 = dict()
-
-    parentDirectory = commandlineArgument
-
-    # open file and load json
-    f = open(os.path.join(commandlineArgument, "bookkeeping.json"))
-    jsonData = json.load(f)
-
-    for entry in jsonData:
-        location = entry.split("/")
-        url = jsonData[entry]
+    for filename in jsonData:
+        location = filename.split("/")
+        url = jsonData[filename]
         print(location)
+        file_path = os.path.join(corpus_dir, location[0], location[1])
+        with open(file_path, "r", encoding = "utf-8") as f:
+            contents = f.read()
 
-        # create path for file and open file
-        path = os.path.join(parentDirectory, location[0], location[1])
-        
-        websiteTokens = tokenizeWebpage(path)
+            # Use BeautifulSoup to parse the HTML contents of the file
+            soup = BeautifulSoup(contents, "html.parser")
 
-        for word in websiteTokens:
-            if word in index1:
-                if url in index1[word]:
-                    index1[word][url]["frequency"] += 1
+            # Get the text from the HTML contents
+            text = soup.get_text()
+
+            # Tokenize the text using the NLTK tokenizer
+            tokens = nltk.tokenize.word_tokenize(text.lower())
+
+            # Lemmatize the tokens using the NLTK WordNetLemmatizer
+            lemmatized_tokens = [nltk.stem.WordNetLemmatizer().lemmatize(token) for token in tokens]
+
+            # Add the tokens to the index
+            for token in lemmatized_tokens:
+                if token in index:
+                    if url in index[token]:
+                        index[token][url]["frequency"] += 1
+                    else:
+                        index[token][url] = {"frequency":1, "bold": 0, "header": 0, "title": 0}
                 else:
-                    index1[word][url] = {"frequency":1, "bold": 0, "header": 0, "title": 0}
-            else:
-                # index1[word] = {url:{"frequency":1, "bold": 0, "header": 0}, "title": 0}
-                index1[word] = {url:{"frequency":1, "bold": 0, "header": 0, "title": 0}}
-        
+                    index[token] = {url:{"frequency":1, "bold": 0, "header": 0, "title": 0}}
 
-    #return complete index
-    return index1
-                    
-    # by this point index1 is completed
-    # iterate through index1 to create inverted_index with tdif
-
-
-
-
-# python3 main.py /Users/akbenothman/Desktop/WEBPAGES_RAW
+    # The index has now been constructed
+    return index
