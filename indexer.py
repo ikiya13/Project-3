@@ -14,6 +14,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s', date
 
 def createIndex():
     # Dictionary to store the index
+    # index1 STRUCTURE
+    # { token : { url : { "frequency": int, "bold": int, "header": int, "title": int}}}
     index = {}
 
     # The location of the corpus
@@ -51,13 +53,33 @@ def createIndex():
                 if token in index:
                     # If the URL is already included
                     if url in index[token]:
-                        index[token][url]["frequency"] += 1
+                        index[token][url]["frequency"] += (1 / len(lemmatized_tokens))
                     # If we are at a new URL
                     else:
-                        index[token][url] = {"frequency":1, "bold": 0, "header": 0, "title": 0}
+                        index[token][url] = {"frequency": (1 / len(lemmatized_tokens)), "bold": 0, "header": 0, "title": 0}
                 # New token encountered
                 else:
-                    index[token] = {url:{"frequency":1, "bold": 0, "header": 0, "title": 0}}
+                    index[token] = {url:{"frequency": (1 / len(lemmatized_tokens)), "bold": 0, "header": 0, "title": 0}}
 
-    # The index has now been constructed
+    # The index has now been constructed, add TF-IDF
+    index = addTFIDF(index)
+
+    #return
+    return index
+
+
+
+def addTFIDF(index):
+    # Calculate TF-IDF
+    for token in index:
+        # { token : { url : { "frequency": int, "bold": int, "header": int, "title": int}}}
+        for url in index[token]:
+            tf = index[token][url]["frequency"]
+            idf = 1 / len(index[token])
+            tfidf = tf * idf
+
+            #add TF-IDF
+            index[token][url]["tf-idf"] = tfidf
+    
+    #TF-IDF has been added
     return index
