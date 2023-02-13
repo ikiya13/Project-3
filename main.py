@@ -8,6 +8,8 @@ from indexer import createIndex
 #call indexer passing command line argument
 index = createIndex()
 
+print(index.encode("utf-8"))
+
 #save to file
 pickle.dump(index, open("indexFile.pickle", "wb"))
 
