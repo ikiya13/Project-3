@@ -15,23 +15,17 @@ def tokenizeWebpage(path):
     #open webpage
     page = open(path, "r", encoding="utf8")
 
+    # Create a single BeautifulSoup object for the entire page
+    soup = BeautifulSoup(page, 'lxml')
+
     #tokenize page
-    for content in page:
-        soup = BeautifulSoup(content, 'html.parser')
-        # if bold chunk
-
-        # if header chunk h1 h2 h3
-
-        # if title chunk
-
-        # if div chunk
-        for i in soup.strings:
-            words = g.tokenize(i)
-
-            for word in words:
-                wordList.append(word.lower())
+    for content in soup.strings:
+        words = g.tokenize(content)
+        for word in words:
+            wordList.append(word.lower())
 
     return wordList
+
 
 
 
