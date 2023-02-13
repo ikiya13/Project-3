@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 # Download the NLTK Punkt tokenizer and the WordNet lemmatizer
 nltk.download("punkt")
 nltk.download("wordnet")
+nltk.download('averaged_perceptron_tagger')
 
 #create logger
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
@@ -17,6 +18,9 @@ def createIndex():
     # index1 STRUCTURE
     # { token : { url : { "frequency": int, "bold": int, "header": int, "title": int}}}
     index = {}
+
+    # Regex expression
+    regexWord = nltk.tokenize.RegexpTokenizer(r"\w+")
 
     # The location of the corpus
     corpus_dir = sys.argv[1]
@@ -42,10 +46,14 @@ def createIndex():
             text = soup.get_text()
 
             # Tokenize the text
-            tokens = nltk.tokenize.word_tokenize(text.lower())
+            # tokens = nltk.tokenize.word_tokenize(text.lower())
+            tokens = regexWord.tokenize(text.lower())
 
             # Lemmatize the tokens
-            lemmatized_tokens = [nltk.stem.WordNetLemmatizer().lemmatize(token) for token in tokens]
+            lemmatized_tokens = []
+            for token in tokens:
+                if token not in nltk.corpus.stopwords.words("english"):
+                    lemmatized_tokens.append(nltk.stem.WordNetLemmatizer().lemmatize(token, get_wordnet_pos(token)))
 
             # Add the tokens to the index
             for token in lemmatized_tokens:
@@ -66,6 +74,17 @@ def createIndex():
 
     #return
     return index
+
+
+# Function to get the POS of a word for lemmatization
+def get_wordnet_pos(word):
+    tag = nltk.pos_tag([word])[0][1][0].upper()
+    tag_dict = {"J": nltk.corpus.wordnet.ADJ,
+                "N": nltk.corpus.wordnet.NOUN,
+                "V": nltk.corpus.wordnet.VERB,
+                "R": nltk.corpus.wordnet.ADV}
+    
+    return tag_dict.get(tag, nltk.corpus.wordnet.NOUN)
 
 
 
