@@ -1,3 +1,4 @@
+import math
 import os
 import sys
 import json
@@ -9,6 +10,7 @@ from bs4 import BeautifulSoup
 nltk.download("punkt")
 nltk.download("wordnet")
 nltk.download('averaged_perceptron_tagger')
+nltk.download('stopwords')
 
 #create logger
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
@@ -26,7 +28,7 @@ def createIndex():
     corpus_dir = sys.argv[1]
 
     # Open JSON file and loop over entries
-    jsonData = json.load(open(os.path.join(corpus_dir, "bookkeeping.json")))    
+    jsonData = json.load(open(os.path.join(corpus_dir, "bookkeeping.json")))
 
     for filename in jsonData:
         # Get full filepath
@@ -70,7 +72,7 @@ def createIndex():
                     index[token] = {url:{"frequency": (1 / len(lemmatized_tokens)), "bold": 0, "header": 0, "title": 0}}
 
     # The index has now been constructed, add TF-IDF
-    index = addTFIDF(index)
+    index = addTFIDF(index, len(jsonData))
 
     #return
     return index
@@ -88,13 +90,13 @@ def get_wordnet_pos(word):
 
 
 
-def addTFIDF(index):
+def addTFIDF(index, corpusLen):
     # Calculate TF-IDF
     for token in index:
         # { token : { url : { "frequency": int, "bold": int, "header": int, "title": int}}}
         for url in index[token]:
             tf = index[token][url]["frequency"]
-            idf = 1 / len(index[token])
+            idf = math.log(corpusLen / len(index[token]))
             tfidf = tf * idf
 
             #add TF-IDF
