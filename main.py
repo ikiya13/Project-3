@@ -21,11 +21,11 @@ if not path.is_file():
     #save to file
     logging.info("Saving to file.")
     pickle.dump(index, open("indexFile.pickle", "wb"))
-
-#read from file
-logging.info("Reading from file.")
-index = pickle.load(open("indexFile.pickle", "rb"))
-#print(index)
+else:
+    #read from file
+    logging.info("Reading from file.")
+    index = pickle.load(open("indexFile.pickle", "rb"))
+    #print(index)
 
 
 # input search, split 1 or 2 keywords, call searchIndex with list of tokens (1or2)
@@ -35,4 +35,4 @@ if len(search) > 2:
     search = input("Error: Too many keywords - Search 1 or 2 keywords: ")
     search = search.split(" ")
 
-searchIndex(search)
+searchIndex(search, index)

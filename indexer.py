@@ -107,9 +107,7 @@ def addTFIDF(index, corpusLen):
     return index
 
 
-def searchIndex(tokens):
-    # access index with tfidf
-    index = pickle.load(open("indexFile.pickle", "rb"))
+def searchIndex(tokens, index):
 
     if len(tokens) == 2:
         # 2 words
