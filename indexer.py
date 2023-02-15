@@ -5,6 +5,7 @@ import json
 import logging
 import nltk
 from bs4 import BeautifulSoup
+import pickle
 
 # Download the NLTK Punkt tokenizer and the WordNet lemmatizer
 nltk.download("punkt")
@@ -104,3 +105,33 @@ def addTFIDF(index, corpusLen):
     
     #TF-IDF has been added
     return index
+
+
+def searchIndex(tokens):
+    # access index with tfidf
+    index = pickle.load(open("indexFile.pickle", "rb"))
+
+    if len(tokens) == 2:
+        # 2 words
+        # n grams
+        # cosine similarity method
+        token1 = tokens[0]
+        token2 = tokens[1]
+        postings1 = index[token1]
+        postings2 = index[token2]
+        pass
+    else:
+        # 1 keyword search for M1
+        token = tokens[0]
+        postings = index[token]
+
+        # version 1: return top 20 postings ranked by tfidf
+        ranked_tfidf = sorted(postings.items(), key = lambda x: x[1]["tf-idf"], reverse = True)
+        if len(postings) > 20:
+            ranked_tfidf = ranked_tfidf[:20]
+        for tup in ranked_tfidf:
+            print(tup[0])
+        
+
+
+# python main.py /Users/akbenothman/Desktop/WEBPAGES_RAW
