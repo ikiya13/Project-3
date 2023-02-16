@@ -125,8 +125,10 @@ def searchIndex(tokens, index):
 
         # version 1: return top 20 postings ranked by tfidf
         ranked_tfidf = sorted(postings.items(), key = lambda x: x[1]["tf-idf"], reverse = True)
+        print(f"Number of results: {len(postings)}")
         if len(postings) > 20:
             ranked_tfidf = ranked_tfidf[:20]
+        print(f"Top {len(ranked_tfidf)} results: ")
         for tup in ranked_tfidf:
             print(tup[0])
         

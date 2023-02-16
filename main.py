@@ -29,7 +29,7 @@ else:
 
 
 # input search, split 1 or 2 keywords, call searchIndex with list of tokens (1or2)
-search = input("Search 1 or 2 keywords: ")
+search = input("Search 1 or 2 keywords: ").lower()
 search = search.split(" ")
 if len(search) > 2:
     search = input("Error: Too many keywords - Search 1 or 2 keywords: ")
