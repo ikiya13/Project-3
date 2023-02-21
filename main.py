@@ -25,7 +25,6 @@ else:
     #read from file
     logging.info("Reading from file.")
     index = pickle.load(open("indexFile.pickle", "rb"))
-    #print(index)
 
 
 # input search, split 1 or 2 keywords, call searchIndex with list of tokens (1or2)
