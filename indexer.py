@@ -7,6 +7,8 @@ import nltk
 from bs4 import BeautifulSoup
 import pickle
 
+from nltk import WordPunctTokenizer
+
 # Download the NLTK Punkt tokenizer and the WordNet lemmatizer
 nltk.download("punkt")
 nltk.download("wordnet")
@@ -23,7 +25,8 @@ def createIndex():
     index = {}
 
     # Regex expression
-    regexWord = nltk.tokenize.RegexpTokenizer(r"\w+")
+    # regexWord = nltk.tokenize.RegexpTokenizer(r"\w+")
+    wordpunct_tokenize = WordPunctTokenizer().tokenize
 
     # The location of the corpus
     corpus_dir = sys.argv[1]
@@ -50,12 +53,13 @@ def createIndex():
 
             # Tokenize the text
             # tokens = nltk.tokenize.word_tokenize(text.lower())
-            tokens = regexWord.tokenize(text.lower())
+            # tokens = regexWord.tokenize(text.lower())
+            tokens = wordpunct_tokenize(text.lower())
 
             # Lemmatize the tokens
             lemmatized_tokens = []
             for token in tokens:
-                if token not in nltk.corpus.stopwords.words("english"):
+                if token not in nltk.corpus.stopwords.words("english") and token.isalpha():
                     lemmatized_tokens.append(nltk.stem.WordNetLemmatizer().lemmatize(token, get_wordnet_pos(token)))
 
             # Add the tokens to the index
