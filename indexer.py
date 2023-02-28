@@ -68,13 +68,14 @@ def createIndex():
                 if token in index:
                     # If the URL is already included
                     if url in index[token]:
-                        index[token][url]["frequency"] += (1 / len(lemmatized_tokens))
+                        index[token][url]["frequency"] += 1
+                        index[token][url]["tf"] += (1 / len(lemmatized_tokens))
                     # If we are at a new URL
                     else:
-                        index[token][url] = {"frequency": (1 / len(lemmatized_tokens)), "bold": 0, "header": 0, "title": 0}
+                        index[token][url] = {"frequency": 1, "tf": (1 / len(lemmatized_tokens)), "bold": 0, "header": 0, "title": 0}
                 # New token encountered
                 else:
-                    index[token] = {url:{"frequency": (1 / len(lemmatized_tokens)), "bold": 0, "header": 0, "title": 0}}
+                    index[token] = {url:{"frequency": 1, "tf": (1 / len(lemmatized_tokens)), "bold": 0, "header": 0, "title": 0}}
 
     # The index has now been constructed, add TF-IDF
     index = addTFIDF(index, len(jsonData))
@@ -84,6 +85,7 @@ def createIndex():
 
 
 # Function to get the POS of a word for lemmatization
+# Code taken from https://www.machinelearningplus.com/nlp/lemmatization-examples-python/
 def get_wordnet_pos(word):
     tag = nltk.pos_tag([word])[0][1][0].upper()
     tag_dict = {"J": nltk.corpus.wordnet.ADJ,
@@ -100,9 +102,10 @@ def addTFIDF(index, corpusLen):
     for token in index:
         # { token : { url : { "frequency": int, "bold": int, "header": int, "title": int}}}
         for url in index[token]:
+            # Using the definition provided in class, we are to use the raw frequency of the word and not the relative frequency stored in "tf"
             tf = index[token][url]["frequency"]
             idf = math.log(corpusLen / len(index[token]))
-            tfidf = tf * idf
+            tfidf = (1 + math.log(tf)) * idf
 
             #add TF-IDF
             index[token][url]["tf-idf"] = tfidf

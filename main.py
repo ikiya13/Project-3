@@ -25,7 +25,6 @@ else:
     #read from file
     logging.info("Reading from file.")
     index = pickle.load(open("indexFile.pickle", "rb"))
-    #print(index)
 
 # Analytics
 doc_ID = set()
