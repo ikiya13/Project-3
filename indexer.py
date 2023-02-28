@@ -113,7 +113,6 @@ def addTFIDF(index, corpusLen):
     #TF-IDF has been added
     return index
 
-
 def searchIndex(tokens, index):
 
     if len(tokens) == 2:
@@ -122,13 +121,51 @@ def searchIndex(tokens, index):
         # cosine similarity method
         token1 = tokens[0]
         token2 = tokens[1]
-        postings1 = index[token1]
-        postings2 = index[token2]
-        pass
+        # testing tokens
+        try:
+            postings1 = index[token1]
+        except(KeyError):
+            try:
+                postings2 = index[token2]
+                return searchIndex(token2, index)
+            except(KeyError):
+                print(f"There are no results for this search")
+                return
+        try:
+            postings2 = index[token2]
+        except(KeyError):
+            return searchIndex(token1, index)
+
+        # making new dict with combined tfidfs
+        both_tokens = dict()
+
+        for url in postings1:
+            if url in postings2:
+                both_tokens[url] = postings1[url]["tf-idf"] + postings2[url]["tf-idf"]
+            else:
+                both_tokens[url] = postings1[url]["tf-idf"]
+                
+        for url in postings2:
+            if url not in both_tokens:
+                both_tokens[url] = postings2[url]["tf-idf"]
+                
+        #search
+        ranked_tfidf = sorted(both_tokens.items(), key = lambda x: x[1], reverse = True)
+        print(f"Number of results: {len(both_tokens)}")
+        if len(both_tokens) > 20:
+            ranked_tfidf = ranked_tfidf[:20]
+        print(f"Top {len(ranked_tfidf)} results: ")
+        for tup in ranked_tfidf:
+            print(tup[0])
+
     else:
         # 1 keyword search for M1
         token = tokens[0]
-        postings = index[token]
+        try:
+            postings = index[token]
+        except(KeyError):
+            print(f"There are no results for this search")
+            return
 
         # version 1: return top 20 postings ranked by tfidf
         ranked_tfidf = sorted(postings.items(), key = lambda x: x[1]["tf-idf"], reverse = True)
