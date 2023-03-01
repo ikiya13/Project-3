@@ -15,18 +15,38 @@ nltk.download("wordnet")
 nltk.download('averaged_perceptron_tagger')
 nltk.download('stopwords')
 
+
+# { token : { url : { "frequency": int, "title": int: "weight": int}}}
+index = {}
+
+wordpunct_tokenize = WordPunctTokenizer().tokenize
+
+
+tagWeights = {
+
+    'title': 110,
+    'h1': 100,
+    'h2': 90,
+    'h3': 80,
+    'h4': 70,
+    'b': 60,
+    'strong': 50,
+    'i': 40,
+    'em': 30,
+    'h5': 20,
+    'h6': 10,
+}
+
 #create logger
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
 def createIndex():
     # Dictionary to store the index
     # index1 STRUCTURE
-    # { token : { url : { "frequency": int, "bold": int, "header": int, "title": int}}}
-    index = {}
+
 
     # Regex expression
     # regexWord = nltk.tokenize.RegexpTokenizer(r"\w+")
-    wordpunct_tokenize = WordPunctTokenizer().tokenize
 
     # The location of the corpus
     corpus_dir = sys.argv[1]
@@ -72,10 +92,10 @@ def createIndex():
                         index[token][url]["tf"] += (1 / len(lemmatized_tokens))
                     # If we are at a new URL
                     else:
-                        index[token][url] = {"frequency": 1, "tf": (1 / len(lemmatized_tokens)), "bold": 0, "header": 0, "title": 0}
+                        index[token][url] = {"frequency": 1, "tf": (1 / len(lemmatized_tokens)), "weight": 0}
                 # New token encountered
                 else:
-                    index[token] = {url:{"frequency": 1, "tf": (1 / len(lemmatized_tokens)), "bold": 0, "header": 0, "title": 0}}
+                    index[token] = {url:{"frequency": 1, "tf": (1 / len(lemmatized_tokens)), "weight": 0}}
 
     # The index has now been constructed, add TF-IDF
     index = addTFIDF(index, len(jsonData))
@@ -94,6 +114,23 @@ def get_wordnet_pos(word):
                 "R": nltk.corpus.wordnet.ADV}
     
     return tag_dict.get(tag, nltk.corpus.wordnet.NOUN)
+
+def calcWeights(soup,url):
+
+    for htmlTags in soup.find_all():
+
+        text = htmlTags.get_text()
+
+        # Tokenize the text
+        tokens = wordpunct_tokenize(text.lower())
+
+        for token in tokens:
+            tokenLemma = nltk.stem.WordNetLemmatizer().lemmatize(token, get_wordnet_pos(token))
+
+            if token in index and url in index[token][url]:
+                index[token][url]["weight"] += tagWeights.get(htmlTags.name, 1)
+
+
 
 
 
