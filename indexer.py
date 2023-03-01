@@ -42,6 +42,7 @@ tagWeights = {
 def createIndex():
     # Dictionary to store the index
     # { token : { url : { "frequency": int, "tfidf": float, "weight": float}}}
+    global index
     index = {}
 
     # The location of the corpus
@@ -90,7 +91,7 @@ def createIndex():
                 else:
                     index[token] = {url:{"frequency": 1, "weight": 1}}
             # add weights 
-            calcWeights(index, soup, url)
+            calcWeights(soup, url)
 
     # The index has now been constructed, add TF-IDF
     index = addTFIDF(index, len(jsonData))
@@ -112,7 +113,7 @@ def get_wordnet_pos(word):
 
 
 # Function to add weights to words based on what tag they appear in
-def calcWeights(index, soup, url):
+def calcWeights(soup, url):
     # Get all the tags on the page and iterate through them
     for htmlTag in soup.find_all():
         # Get text from given tag
@@ -129,9 +130,6 @@ def calcWeights(index, soup, url):
             if tokenLemma in index:
                 if url in index[tokenLemma]:
                     index[tokenLemma][url]["weight"] += tagWeights.get(htmlTag.name, 0)
-    
-    #return index once weight values have been added
-    return index
 
 
 # Function to add TF-IDF values to each word document pair
