@@ -5,8 +5,6 @@ import json
 import logging
 import nltk
 from bs4 import BeautifulSoup
-import pickle
-
 from nltk import WordPunctTokenizer
 
 # Download the NLTK Punkt tokenizer and the WordNet lemmatizer
@@ -15,39 +13,36 @@ nltk.download("wordnet")
 nltk.download('averaged_perceptron_tagger')
 nltk.download('stopwords')
 
-
-
-wordpunct_tokenize = WordPunctTokenizer().tokenize
-
-
-tagWeights = {
-
-    'title': 20,
-    'h1': 15,
-    'h2': 10,
-    'h3': 8,
-    'h4': 7,
-    'b': 6,
-    'strong': 5,
-    'i': 4,
-    'em': 3,
-    'h5': 2,
-    'h6': 2,
-}
-
 #create logger
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
+wordpunct_tokenize = WordPunctTokenizer().tokenize
+
+tagWeights = {
+    "title": 10,
+    "h1": 8,
+    "h2": 7,
+    "h3": 6,
+    "h4": 5,
+    "h5": 4,
+    "h6": 3,
+    "strong": 2,
+    "em": 2,
+    "b": 1.5,
+    "i": 1.5,
+    "u": 1.5,
+    "p": 1,
+    "a": 0.5,
+    "img": 0.2,
+    "div": 0.1,
+    "span": 0.1
+}
+
+
 def createIndex():
     # Dictionary to store the index
-    # { token : { url : { "frequency": int, "tfidf": float, "weight": int}}}
-    #for testing
-    global index
+    # { token : { url : { "frequency": int, "tfidf": float, "weight": float}}}
     index = {}
-
-
-    # Regex expression
-    # regexWord = nltk.tokenize.RegexpTokenizer(r"\w+")
 
     # The location of the corpus
     corpus_dir = sys.argv[1]
@@ -73,8 +68,6 @@ def createIndex():
             text = soup.get_text()
 
             # Tokenize the text
-            # tokens = nltk.tokenize.word_tokenize(text.lower())
-            # tokens = regexWord.tokenize(text.lower())
             tokens = wordpunct_tokenize(text.lower())
 
             # Lemmatize the tokens
@@ -97,7 +90,7 @@ def createIndex():
                 else:
                     index[token] = {url:{"frequency": 1, "weight": 1}}
             # add weights 
-            calcWeights(soup,url)
+            calcWeights(index, soup, url)
 
     # The index has now been constructed, add TF-IDF
     index = addTFIDF(index, len(jsonData))
@@ -117,26 +110,31 @@ def get_wordnet_pos(word):
     
     return tag_dict.get(tag, nltk.corpus.wordnet.NOUN)
 
-def calcWeights(soup,url):
 
-    for htmlTags in soup.find_all():
-
-        text = htmlTags.get_text()
+# Function to add weights to words based on what tag they appear in
+def calcWeights(index, soup, url):
+    # Get all the tags on the page and iterate through them
+    for htmlTag in soup.find_all():
+        # Get text from given tag
+        text = htmlTag.get_text()
 
         # Tokenize the text
         tokens = wordpunct_tokenize(text.lower())
 
         for token in tokens:
+            # Lemmatize
             tokenLemma = nltk.stem.WordNetLemmatizer().lemmatize(token, get_wordnet_pos(token))
 
-            if token in index:
-                if url in index[token]:
-                    index[token][url]["weight"] += tagWeights.get(htmlTags.name, 0)
+            # Add weight
+            if tokenLemma in index:
+                if url in index[tokenLemma]:
+                    index[tokenLemma][url]["weight"] += tagWeights.get(htmlTag.name, 0)
+    
+    #return index once weight values have been added
+    return index
 
 
-
-
-
+# Function to add TF-IDF values to each word document pair
 def addTFIDF(index, corpusLen):
     # Calculate TF-IDF
     for token in index:
@@ -153,6 +151,8 @@ def addTFIDF(index, corpusLen):
     #TF-IDF has been added
     return index
 
+
+# Query the index
 def searchIndex(tokens, index):
 
     if len(tokens) == 2:
