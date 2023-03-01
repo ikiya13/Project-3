@@ -16,25 +16,23 @@ nltk.download('averaged_perceptron_tagger')
 nltk.download('stopwords')
 
 
-# { token : { url : { "frequency": int, "title": int: "weight": int}}}
-index = {}
 
 wordpunct_tokenize = WordPunctTokenizer().tokenize
 
 
 tagWeights = {
 
-    'title': 110,
-    'h1': 100,
-    'h2': 90,
-    'h3': 80,
-    'h4': 70,
-    'b': 60,
-    'strong': 50,
-    'i': 40,
-    'em': 30,
-    'h5': 20,
-    'h6': 10,
+    'title': 20,
+    'h1': 15,
+    'h2': 10,
+    'h3': 8,
+    'h4': 7,
+    'b': 6,
+    'strong': 5,
+    'i': 4,
+    'em': 3,
+    'h5': 2,
+    'h6': 2,
 }
 
 #create logger
@@ -42,7 +40,10 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s', date
 
 def createIndex():
     # Dictionary to store the index
-    # index1 STRUCTURE
+    # { token : { url : { "frequency": int, "tfidf": float, "weight": int}}}
+    #for testing
+    global index
+    index = {}
 
 
     # Regex expression
@@ -89,13 +90,14 @@ def createIndex():
                     # If the URL is already included
                     if url in index[token]:
                         index[token][url]["frequency"] += 1
-                        index[token][url]["tf"] += (1 / len(lemmatized_tokens))
                     # If we are at a new URL
                     else:
-                        index[token][url] = {"frequency": 1, "tf": (1 / len(lemmatized_tokens)), "weight": 0}
+                        index[token][url] = {"frequency": 1, "weight": 1}
                 # New token encountered
                 else:
-                    index[token] = {url:{"frequency": 1, "tf": (1 / len(lemmatized_tokens)), "weight": 0}}
+                    index[token] = {url:{"frequency": 1, "weight": 1}}
+            # add weights 
+            calcWeights(soup,url)
 
     # The index has now been constructed, add TF-IDF
     index = addTFIDF(index, len(jsonData))
@@ -127,8 +129,9 @@ def calcWeights(soup,url):
         for token in tokens:
             tokenLemma = nltk.stem.WordNetLemmatizer().lemmatize(token, get_wordnet_pos(token))
 
-            if token in index and url in index[token][url]:
-                index[token][url]["weight"] += tagWeights.get(htmlTags.name, 1)
+            if token in index:
+                if url in index[token]:
+                    index[token][url]["weight"] += tagWeights.get(htmlTags.name, 0)
 
 
 
