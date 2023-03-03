@@ -1,7 +1,10 @@
+import itertools
 import math
 import os
 import sys
 import json
+import numpy as np
+from numpy.linalg import norm
 import logging
 import nltk
 from bs4 import BeautifulSoup
@@ -13,10 +16,12 @@ nltk.download("wordnet")
 nltk.download('averaged_perceptron_tagger')
 nltk.download('stopwords')
 
-#create logger
+# create logger
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
 wordpunct_tokenize = WordPunctTokenizer().tokenize
+
+KSCORES = 20
 
 tagWeights = {
     "title": 10,
@@ -55,7 +60,7 @@ def createIndex():
         logging.info("Processing file: %s", location)
 
         # Open file
-        with open(file_path, "r", encoding = "utf-8") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             contents = f.read()
 
             # parse the HTML contents of the file
@@ -85,14 +90,14 @@ def createIndex():
                         index[token][url] = {"frequency": 1, "weight": 1}
                 # New token encountered
                 else:
-                    index[token] = {url:{"frequency": 1, "weight": 1}}
-            # add weights 
+                    index[token] = {url: {"frequency": 1, "weight": 1}}
+            # add weights
             calcWeights(soup, url)
 
     # The index has now been constructed, add TF-IDF
     index = addTFIDF(index, len(jsonData))
 
-    #return
+    # return
     return index
 
 
@@ -104,7 +109,7 @@ def get_wordnet_pos(word):
                 "N": nltk.corpus.wordnet.NOUN,
                 "V": nltk.corpus.wordnet.VERB,
                 "R": nltk.corpus.wordnet.ADV}
-    
+
     return tag_dict.get(tag, nltk.corpus.wordnet.NOUN)
 
 
@@ -139,10 +144,10 @@ def addTFIDF(index, corpusLen):
             idf = math.log(corpusLen / len(index[token]))
             tfidf = (1 + math.log(tf)) * idf
 
-            #add TF-IDF
+            # add TF-IDF
             index[token][url]["tf-idf"] = tfidf
-    
-    #TF-IDF has been added
+
+    # TF-IDF has been added
     return index
 
 
@@ -158,16 +163,16 @@ def searchIndex(tokens, index):
         # testing tokens
         try:
             postings1 = index[token1]
-        except(KeyError):
+        except (KeyError):
             try:
                 postings2 = index[token2]
                 return searchIndex(token2, index)
-            except(KeyError):
+            except (KeyError):
                 print(f"There are no results for this search")
                 return
         try:
             postings2 = index[token2]
-        except(KeyError):
+        except (KeyError):
             return searchIndex(token1, index)
 
         # making new dict with combined tfidfs
@@ -178,13 +183,13 @@ def searchIndex(tokens, index):
                 both_tokens[url] = postings1[url]["tf-idf"] + postings2[url]["tf-idf"]
             else:
                 both_tokens[url] = postings1[url]["tf-idf"]
-                
+
         for url in postings2:
             if url not in both_tokens:
                 both_tokens[url] = postings2[url]["tf-idf"]
-                
-        #search
-        ranked_tfidf = sorted(both_tokens.items(), key = lambda x: x[1], reverse = True)
+
+        # search
+        ranked_tfidf = sorted(both_tokens.items(), key=lambda x: x[1], reverse=True)
         print(f"Number of results: {len(both_tokens)}")
         if len(both_tokens) > 20:
             ranked_tfidf = ranked_tfidf[:20]
@@ -197,19 +202,64 @@ def searchIndex(tokens, index):
         token = tokens[0]
         try:
             postings = index[token]
-        except(KeyError):
+        except (KeyError):
             print(f"There are no results for this search")
             return
 
         # version 1: return top 20 postings ranked by tfidf
-        ranked_tfidf = sorted(postings.items(), key = lambda x: x[1]["tf-idf"], reverse = True)
+        ranked_tfidf = sorted(postings.items(), key=lambda x: x[1]["tf-idf"], reverse=True)
         print(f"Number of results: {len(postings)}")
         if len(postings) > 20:
             ranked_tfidf = ranked_tfidf[:20]
         print(f"Top {len(ranked_tfidf)} results: ")
         for tup in ranked_tfidf:
             print(tup[0])
-        
+
+
+def search(index, query):
+    #clean query
+    # Lemmatize the tokens
+    queryLemmas = []
+    for token in query:
+        if token not in nltk.corpus.stopwords.words("english") and token.isalpha():
+            queryLemmas.append(nltk.stem.WordNetLemmatizer().lemmatize(token, get_wordnet_pos(token)))
+    
+    # Get the set of URLs for each token
+    postings = [set(index[token]) for token in queryLemmas]
+
+    # Find the intersection of all URL sets
+    intersection = set.intersection(*postings)
+
+    #calculate TFIDFs of query
+    queryTFIDF = []
+
+    for token in queryLemmas:
+        #calculate tfidf for each token in the query
+        tf = 1 + math.log(queryLemmas.count(token))
+        idf = math.log(len(json.load(open(os.path.join(sys.argv[1], "bookkeeping.json")))) / len(index[token]))
+        queryTFIDF.append(tf * idf)
+
+    #calculate TFIDFs for each url in intersection
+    documentsTFIDF = {}
+    for url in intersection:
+        documentsTFIDF[url] = []
+
+        for token in queryLemmas:
+            documentsTFIDF[url].append(index[token][url]["tf-idf"])
+    
+
+    cosineScores = {}
+    for url in intersection:
+        cosineScores[url] = np.dot(queryTFIDF, documentsTFIDF[url])
+    
+    #sort cosines
+    cosineScores = dict(sorted(cosineScores.items(), key=lambda item: item[1], reverse = True))
+
+    #get top k
+    cosineScores = dict(itertools.islice(cosineScores.items(), KSCORES))
+    
+    return cosineScores
+
 
 
 # python main.py /Users/akbenothman/Desktop/WEBPAGES_RAW

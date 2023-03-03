@@ -1,28 +1,29 @@
-#import required libraries
+# import required libraries
 import sys
 import pickle
 import logging
 from pathlib import Path
 
-#other modules
+# other modules
 from indexer import createIndex
-from indexer import searchIndex
+from indexer import searchIndex, search
 
-#create logger
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
+# create logger
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
-#call indexer passing command line argument
+# call indexer passing command line argument
 path = Path("indexFile.pickle")
 if not path.is_file():
 
     logging.info("Creating index.")
     index = createIndex()
 
-    #save to file
+    # save to file
     logging.info("Saving to file.")
     pickle.dump(index, open("indexFile.pickle", "wb"))
 else:
-    #read from file
+    # read from file
     logging.info("Reading from file.")
     index = pickle.load(open("indexFile.pickle", "rb"))
 
@@ -36,10 +37,9 @@ logging.info(f"Number of unique document id's in index: {len(doc_ID)}")
 logging.info(f"Number of unique words in index: {len(index)}")
 
 # input search, split 1 or 2 keywords, call searchIndex with list of tokens (1or2)
-search = input("Search 1 or 2 keywords: ").lower()
-search = search.split(" ")
-if len(search) > 2:
-    search = input("Error: Too many keywords - Search 1 or 2 keywords: ")
-    search = search.split(" ")
+query = input("Input search query: ").lower().split()
 
-searchIndex(search, index)
+results = search(index, query)
+
+for entry in results:
+        print("Score: " + str(results[entry]) + "\tURL: " + str(entry))
