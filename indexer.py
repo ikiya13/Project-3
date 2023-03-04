@@ -236,21 +236,28 @@ def search(index, query):
     for token in queryLemmas:
         #calculate tfidf for each token in the query
         tf = 1 + math.log(queryLemmas.count(token))
-        idf = math.log(len(json.load(open(os.path.join(sys.argv[1], "bookkeeping.json")))) / len(index[token]))
+        idf = math.log(len(json.load(open("bookkeeping.json"))) / len(index[token]))
         queryTFIDF.append(tf * idf)
-
-    #calculate TFIDFs for each url in intersection
+    
+    #retrieve TFIDFs for each url in intersection
     documentsTFIDF = {}
     for url in intersection:
         documentsTFIDF[url] = []
 
         for token in queryLemmas:
-            documentsTFIDF[url].append(index[token][url]["tf-idf"])
-    
+            documentsTFIDF[url].append(index[token][url]["tf-idf"])    
 
+    #calculate the cosine similarity scores between the query tfidf and the document tfidf
     cosineScores = {}
     for url in intersection:
-        cosineScores[url] = np.dot(queryTFIDF, documentsTFIDF[url])
+        #calculate cosine
+        # print("Dot product of " + str(queryTFIDF) + " and " + str(documentsTFIDF[url]) + " is: \t" + str(np.dot(queryTFIDF, documentsTFIDF[url])))
+        # print("Norms of " + str(queryTFIDF) + " and " + str(documentsTFIDF[url]) + " are: \t" + str(norm(queryTFIDF)) + " and " + str(norm(documentsTFIDF[url])))
+        cosineScores[url] = np.dot(queryTFIDF, documentsTFIDF[url]) / (norm(queryTFIDF) * norm(documentsTFIDF[url]))
+
+        #add in the weights from the HTML tags
+        for token in queryLemmas:
+            cosineScores[url] += index[token][url]["weight"]
     
     #sort cosines
     cosineScores = dict(sorted(cosineScores.items(), key=lambda item: item[1], reverse = True))

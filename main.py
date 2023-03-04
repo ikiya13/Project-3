@@ -1,5 +1,4 @@
 # import required libraries
-import sys
 import pickle
 import logging
 from pathlib import Path
