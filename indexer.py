@@ -216,6 +216,14 @@ def searchIndex(tokens, index):
             print(tup[0])
 
 
+
+# step 1: lemmatize query
+# step 2: get postings lists for each term
+# step 3: find intersection of postings lists
+# step 4: calculate tfidf value for query ([value, value, value...])
+# step 5: find tfidf values for each term in query term for each url (this is our vector, in form url: [value, value, value...])
+# step 6: calculate cosine similarity between query vector and each url vector
+# step 7: add in HTML weights, sort, and serve
 def search(index, query):
     #clean query
     # Lemmatize the tokens
@@ -257,7 +265,7 @@ def search(index, query):
 
         #add in the weights from the HTML tags
         for token in queryLemmas:
-            cosineScores[url] += index[token][url]["weight"]
+            cosineScores[url] *= math.log(index[token][url]["weight"])
     
     #sort cosines
     cosineScores = dict(sorted(cosineScores.items(), key=lambda item: item[1], reverse = True))
