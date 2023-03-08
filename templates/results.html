@@ -1,13 +1,16 @@
 {% extends "base.html" %} {% block query %} {{ request.form.query }} {% endblock
-  %} {% block content %}
-  
-  <h1>Search Results</h1>
-  {% if results %}
-  <ul>
-    {% for url, score in results.items() %}
-    <li><a href="{{ urljoin('https://', url) }}">{{ url }}</a> ({{ score }})</li>
-    {% endfor %}
-  </ul>
-  {% else %}
-  <p>No results found.</p>
-  {% endif %} {% endblock %}
+%} {% block content %}
+
+<h1>Search Results</h1>
+{% if results %}
+<ul>
+  {% for url, score in results.items() %}
+  <li>
+    <a href="{{ urljoin('https://', url) }}">{{ url }}</a> ({{ score }})
+    ({{snippets[url]}})
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No results found.</p>
+{% endif %} {% endblock %}

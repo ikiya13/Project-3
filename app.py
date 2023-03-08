@@ -8,8 +8,7 @@ from indexer import createIndex, search
 app = Flask(__name__)
 
 # create logger
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
 # call indexer passing command line argument
 path = Path("indexFile.pickle")
@@ -41,8 +40,8 @@ def home():
 def search_route():
     if request.method == 'POST':
         query = request.form['query'].lower().split()
-        results = search(index, query)
-        return render_template('results.html', results=results, urljoin=urljoin)
+        results, snippets = search(index, query)
+        return render_template('results.html', results=results, urljoin=urljoin, snippets=snippets)
     else:
         return render_template('index.html')
 
