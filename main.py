@@ -38,7 +38,7 @@ logging.info(f"Number of unique words in index: {len(index)}")
 # input search, split 1 or 2 keywords, call searchIndex with list of tokens (1or2)
 query = input("Input search query: ").lower().split()
 
-results, snippets = search(index, query)
+results = search(index, query)
 
 for entry in results:
-        print("Score: " + str(results[entry]) + "\tURL: " + str(entry) + "\n" + snippets[entry] + "\n")
+        print("Score: " + str(results[entry]) + "\tURL: " + str(entry))

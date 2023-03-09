@@ -277,31 +277,33 @@ def search(index, query):
             documentsTFIDF[url].append(tfidf)    
 
     #calculate the cosine similarity scores between the query tfidf and the document tfidf
-    cosineScores = {}
+    results = {}
     for url in URLs:
         #calculate cosine
         # print("Dot product of " + str(queryTFIDF) + " and " + str(documentsTFIDF[url]) + " is: \t" + str(np.dot(queryTFIDF, documentsTFIDF[url])))
         # print("Norms of " + str(queryTFIDF) + " and " + str(documentsTFIDF[url]) + " are: \t" + str(norm(queryTFIDF)) + " and " + str(norm(documentsTFIDF[url])))
-        cosineScores[url] = np.dot(queryTFIDF, documentsTFIDF[url]) / (norm(queryTFIDF) * norm(documentsTFIDF[url]))
+        results[url] = []
+        results[url].append(np.dot(queryTFIDF, documentsTFIDF[url]) / (norm(queryTFIDF) * norm(documentsTFIDF[url])))
 
         #add in the weights from the HTML tags
         for token in queryLemmas:
             if url in index[token]:
-                cosineScores[url] *= math.log(index[token][url]["weight"])
+                results[url][0] *= math.log(index[token][url]["weight"])
     
     #sort cosines
-    cosineScores = dict(sorted(cosineScores.items(), key=lambda item: item[1], reverse = True))
+    results = dict(sorted(results.items(), key=lambda item: item[1][0], reverse = True))
 
     #get top k
-    cosineScores = dict(itertools.islice(cosineScores.items(), KSCORES))
+    results = dict(itertools.islice(results.items(), KSCORES))
 
     with open("bookkeeping.json") as f:
         jsonData = json.load(f)
 
         #get snippets for each URL
         snippets = {}
+        titles = {}
 
-        for url in cosineScores.keys():
+        for url in results.keys():
             # find url in json index
             location = ""
             for entry in jsonData:
@@ -323,10 +325,16 @@ def search(index, query):
                 # Get the text
                 text = soup.get_text()
 
+                # Get the titles
+                titles[url] = soup.find('title').string
+                results[url].append(soup.find('title').string)
+
                 #add snippet
                 snippets[url] = text[:1000]
+                results[url].append(text[:1000])
+                
 
-        return cosineScores, snippets
+        return results
 
 
 
