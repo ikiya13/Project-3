@@ -295,13 +295,12 @@ def search(index, query):
     #get top k
     cosineScores = dict(itertools.islice(cosineScores.items(), KSCORES))
 
-    jsonData = json.load(open("bookkeeping.json"))
-
     with open("bookkeeping.json") as f:
         jsonData = json.load(f)
 
         #get snippets for each URL
         snippets = {}
+
         for url in cosineScores.keys():
             # find url in json index
             location = ""
@@ -310,24 +309,24 @@ def search(index, query):
                     location = entry
                     break
         
-        #get filepath
-        location = location.split("/")
-        path = os.path.join(r"D:\Downloads\webpages\WEBPAGES_RAW", location[0], location[1])
-        
-        #open the file, read contents, add snippet to results
-        with open(path, "r", encoding="utf-8") as f:
-            contents = f.read()
+            #get filepath
+            location = location.split("/")
+            path = os.path.join(r"C:\Users\farme\Downloads\webpages\WEBPAGES_RAW", location[0], location[1])
+            
+            #open the file, read contents, add snippet to results
+            with open(path, "r", encoding="utf-8") as f:
+                contents = f.read()
 
-            # parse the HTML contents of the file
-            soup = BeautifulSoup(contents, "lxml")
+                # parse the HTML contents of the file
+                soup = BeautifulSoup(contents, "lxml")
 
-            # Get the text
-            text = soup.get_text()
+                # Get the text
+                text = soup.get_text()
 
-            #add snippet
-            snippets[url] = text[:1000]
+                #add snippet
+                snippets[url] = text[:1000]
 
-    return cosineScores, snippets
+        return cosineScores, snippets
 
 
 
