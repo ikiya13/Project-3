@@ -1,6 +1,7 @@
 import itertools
 import math
 import os
+import random
 import sys
 import json
 import numpy as np
@@ -50,52 +51,53 @@ def createIndex():
     corpus_dir = sys.argv[1]
 
     # Open JSON file and loop over entries
-    jsonData = json.load(open(os.path.join(corpus_dir, "bookkeeping.json")))
+    with open(os.path.join(corpus_dir, "bookkeeping.json")) as f:
+        jsonData = json.load(f)
 
-    for filename in jsonData:
-        # Get full filepath
-        location = filename.split("/")
-        url = jsonData[filename]
-        file_path = os.path.join(corpus_dir, location[0], location[1])
-        logging.info("Processing file: %s", location)
+        for filename in jsonData:
+            # Get full filepath
+            location = filename.split("/")
+            url = jsonData[filename]
+            file_path = os.path.join(corpus_dir, location[0], location[1])
+            logging.info("Processing file: %s", location)
 
-        # Open file
-        with open(file_path, "r", encoding="utf-8") as f:
-            contents = f.read()
+            # Open file
+            with open(file_path, "r", encoding="utf-8") as f:
+                contents = f.read()
 
-            # parse the HTML contents of the file
-            soup = BeautifulSoup(contents, "lxml")
+                # parse the HTML contents of the file
+                soup = BeautifulSoup(contents, "lxml")
 
-            # Get the text
-            text = soup.get_text()
+                # Get the text
+                text = soup.get_text()
 
-            # Tokenize the text
-            tokens = wordpunct_tokenize(text.lower())
+                # Tokenize the text
+                tokens = wordpunct_tokenize(text.lower())
 
-            # Lemmatize the tokens
-            lemmatized_tokens = []
-            for token in tokens:
-                if token not in nltk.corpus.stopwords.words("english") and token.isalpha():
-                    lemmatized_tokens.append(nltk.stem.WordNetLemmatizer().lemmatize(token, get_wordnet_pos(token)))
+                # Lemmatize the tokens
+                lemmatized_tokens = []
+                for token in tokens:
+                    if token not in nltk.corpus.stopwords.words("english") and token.isalpha():
+                        lemmatized_tokens.append(nltk.stem.WordNetLemmatizer().lemmatize(token, get_wordnet_pos(token)))
 
-            # Add the tokens to the index
-            for token in lemmatized_tokens:
-                # If the token already exists
-                if token in index:
-                    # If the URL is already included
-                    if url in index[token]:
-                        index[token][url]["frequency"] += 1
-                    # If we are at a new URL
+                # Add the tokens to the index
+                for token in lemmatized_tokens:
+                    # If the token already exists
+                    if token in index:
+                        # If the URL is already included
+                        if url in index[token]:
+                            index[token][url]["frequency"] += 1
+                        # If we are at a new URL
+                        else:
+                            index[token][url] = {"frequency": 1, "weight": 1}
+                    # New token encountered
                     else:
-                        index[token][url] = {"frequency": 1, "weight": 1}
-                # New token encountered
-                else:
-                    index[token] = {url: {"frequency": 1, "weight": 1}}
-            # add weights
-            calcWeights(soup, url)
+                        index[token] = {url: {"frequency": 1, "weight": 1}}
+                # add weights
+                calcWeights(soup, url)
 
-    # The index has now been constructed, add TF-IDF
-    index = addTFIDF(index, len(jsonData))
+        # The index has now been constructed, add TF-IDF
+        index = addTFIDF(index, len(jsonData))
 
     # return
     return index
@@ -137,7 +139,7 @@ def calcWeights(soup, url):
 def addTFIDF(index, corpusLen):
     # Calculate TF-IDF
     for token in index:
-        # { token : { url : { "frequency": int, "bold": int, "header": int, "title": int}}}
+        # { token : { url : { "frequency": int, "tfidf": float, "weight": float}}}
         for url in index[token]:
             # Using the definition provided in class, we are to use the raw frequency of the word and not the relative frequency stored in "tf"
             tf = index[token][url]["frequency"]
@@ -240,8 +242,17 @@ def search(index, query):
         return {}, {}
 
     # Find the intersection of all URL sets
-    intersection = set.intersection(*postings)
+    URLs = set.intersection(*postings)
 
+    # Check to see if there are enough results
+    if len(URLs) < KSCORES:
+        # Get a partial set of all URLs with a partial match
+        partialMatches = random.sample(list(set.union(*postings)), 1000)
+
+        # Add to URLs
+        for match in partialMatches:
+            URLs.add(match)
+    
     #calculate TFIDFs of query
     queryTFIDF = []
 
@@ -253,15 +264,21 @@ def search(index, query):
     
     #retrieve TFIDFs for each url in intersection
     documentsTFIDF = {}
-    for url in intersection:
+    for url in URLs:
         documentsTFIDF[url] = []
 
         for token in queryLemmas:
-            documentsTFIDF[url].append(index[token][url]["tf-idf"])    
+            # check to see if TFIDF exists
+            if url in index[token]:
+                tfidf = index[token][url]["tf-idf"]
+            else:
+                tfidf = 0
+
+            documentsTFIDF[url].append(tfidf)    
 
     #calculate the cosine similarity scores between the query tfidf and the document tfidf
     cosineScores = {}
-    for url in intersection:
+    for url in URLs:
         #calculate cosine
         # print("Dot product of " + str(queryTFIDF) + " and " + str(documentsTFIDF[url]) + " is: \t" + str(np.dot(queryTFIDF, documentsTFIDF[url])))
         # print("Norms of " + str(queryTFIDF) + " and " + str(documentsTFIDF[url]) + " are: \t" + str(norm(queryTFIDF)) + " and " + str(norm(documentsTFIDF[url])))
@@ -269,7 +286,8 @@ def search(index, query):
 
         #add in the weights from the HTML tags
         for token in queryLemmas:
-            cosineScores[url] *= math.log(index[token][url]["weight"])
+            if url in index[token]:
+                cosineScores[url] *= math.log(index[token][url]["weight"])
     
     #sort cosines
     cosineScores = dict(sorted(cosineScores.items(), key=lambda item: item[1], reverse = True))
@@ -279,19 +297,22 @@ def search(index, query):
 
     jsonData = json.load(open("bookkeeping.json"))
 
-    #get snippets for each URL
-    snippets = {}
-    for url in cosineScores.keys():
-        # find url in json index
-        location = ""
-        for entry in jsonData:
-            if jsonData[entry] == url:
-                location = entry
-                break
+    with open("bookkeeping.json") as f:
+        jsonData = json.load(f)
+
+        #get snippets for each URL
+        snippets = {}
+        for url in cosineScores.keys():
+            # find url in json index
+            location = ""
+            for entry in jsonData:
+                if jsonData[entry] == url:
+                    location = entry
+                    break
         
         #get filepath
         location = location.split("/")
-        path = os.path.join(r"C:\Users\farme\Downloads\webpages\WEBPAGES_RAW", location[0], location[1])
+        path = os.path.join(r"D:\Downloads\webpages\WEBPAGES_RAW", location[0], location[1])
         
         #open the file, read contents, add snippet to results
         with open(path, "r", encoding="utf-8") as f:
