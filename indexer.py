@@ -241,9 +241,6 @@ def search(index, query):
         jsonData = json.load(f)
 
         #get snippets for each URL
-        snippets = {}
-        titles = {}
-
         for url in results.keys():
             # find url in json index
             location = ""
@@ -267,15 +264,13 @@ def search(index, query):
                 text = soup.get_text()
 
                 # Get the titles
-                titles[url] = soup.find('title').string
                 results[url].append(soup.find('title').string)
 
                 #add snippet
-                snippets[url] = text[:1000]
                 results[url].append(text[:1000])
                 
 
-        return results
+        return results, len(URLs)
 
 
 

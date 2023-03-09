@@ -40,8 +40,12 @@ def home():
 def search_route():
     if request.method == 'POST':
         query = request.form['query'].lower().split()
-        results = search(index, query)
-        return render_template('results.html', results=results, urljoin=urljoin)
+        results, num_results = search(index, query)
+
+        if not num_results:
+            num_results = 0
+        
+        return render_template('results.html', results=results, num_results=num_results, urljoin=urljoin)
     else:
         return render_template('index.html')
 

@@ -1,7 +1,11 @@
 {% extends "base.html" %} {% block query %} {{ request.form.query }} {% endblock
 %} {% block content %}
+{% if num_results %}
+<h1>20 of {{ num_results }} Search Results</h1>
+{% else %}
+<h1>20 of 0 Search Results</h1>
+{% endif %}
 
-<h1>Search Results</h1>
 {% if results %}
 <ul>
   {% for url in results.keys() %}
