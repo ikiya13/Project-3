@@ -235,6 +235,10 @@ def search(index, query):
     # Get the set of URLs for each token
     postings = [set(index[token]) for token in queryLemmas]
 
+    #check to see if the posting list is empty
+    if len(postings) == 0:
+        return {}, {}
+
     # Find the intersection of all URL sets
     intersection = set.intersection(*postings)
 
@@ -287,7 +291,7 @@ def search(index, query):
         
         #get filepath
         location = location.split("/")
-        path = os.path.join("D:\Downloads\webpages\WEBPAGES_RAW", location[0], location[1])
+        path = os.path.join(r"C:\Users\farme\Downloads\webpages\WEBPAGES_RAW", location[0], location[1])
         
         #open the file, read contents, add snippet to results
         with open(path, "r", encoding="utf-8") as f:
