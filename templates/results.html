@@ -4,7 +4,7 @@
 <h1>Search Results</h1>
 {% if results %}
 <ul>
-  {% for url, score in results.items() %}
+  {% for url in results.keys() %}
   <li>
     <a href="{{ urljoin('https://', url) }}">{{ results[url][1] }}</a> ({{ results[url][0] }})
     ({{results[url][2]}})

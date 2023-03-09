@@ -5,7 +5,7 @@ from pathlib import Path
 
 # other modules
 from indexer import createIndex
-from indexer import searchIndex, search
+from indexer import search
 
 # create logger
 logging.basicConfig(level=logging.INFO,

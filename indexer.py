@@ -182,7 +182,13 @@ def search(index, query):
     # Check to see if there are enough results
     if len(URLs) < KSCORES:
         # Get a partial set of all URLs with a partial match
-        partialMatches = random.sample(list(set.union(*postings)), 1000)
+        sample = 0
+        if len(URLs) < 1000:
+            sample = len(URLs)
+        else:
+            sample = 1000
+
+        partialMatches = random.sample(list(set.union(*postings)), sample)
 
         # Add to URLs
         for match in partialMatches:
@@ -223,7 +229,7 @@ def search(index, query):
         #add in the weights from the HTML tags
         for token in queryLemmas:
             if url in index[token]:
-                results[url][0] *= math.log(index[token][url]["weight"])
+                results[url][0] += index[token][url]["weight"] / 20
     
     #sort cosines
     results = dict(sorted(results.items(), key=lambda item: item[1][0], reverse = True))

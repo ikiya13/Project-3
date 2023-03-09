@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>{% block title %}Search Engine{% endblock %}</title>
+    <title>{% block title %}COMPSCI 121 Search Engine{% endblock %}</title>
     <style>
       body {
         font-family: sans-serif;
@@ -34,8 +34,8 @@
       }
       ul {
         list-style: none;
-        margin: 0 auto; /* center align */
-        max-width: 600px; /* set max width */
+        margin: 0 auto;
+        max-width: 600px;
         padding: 0;
       }
       li {
@@ -49,12 +49,12 @@
         text-decoration: underline;
       }
       h1 {
-        text-align: center; /* center align */
+        text-align: center;
       }
     </style>
   </head>
   <body>
-    <h1>COMPSCI 121: Search Engine</h1> <!-- add heading -->
+    <h1>COMPSCI 121: Search Engine</h1>
     <form method="POST">
       <input type="text" name="query" value="{% block query %}{% endblock %}" />
       <button type="submit">Search</button>
