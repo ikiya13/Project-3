@@ -1,5 +1,86 @@
-{% extends "base.html" %} {% block query %} {{ request.form.query }} {% endblock
-%} {% block content %}
-<h1>Search Results</h1>
-<p>Please enter a search query to see results.</p>
-{% endblock %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{% block title %}COMPSCI 121 Search Engine{% endblock %}</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 0;
+      }
+      form {
+        display: flex;
+        justify-content: center;
+        padding: 1rem;
+        background-color: #f0f0f0;
+      }
+      input[type="text"] {
+        font-size: 1.2rem;
+        padding: 0.5rem;
+        border: none;
+        flex: 1;
+      }
+      button[type="submit"] {
+        font-size: 1.2rem;
+        padding: 0.5rem 1rem;
+        background-color: #0074d9;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+      }
+      hr {
+        margin: 2rem 0;
+        border: none;
+        border-top: 1px solid #ccc;
+      }
+      ul {
+        list-style: none;
+        margin: 0 auto;
+        max-width: 600px;
+        padding: 0;
+      }
+      li {
+        margin-bottom: 1rem;
+      }
+      a {
+        color: #0074d9;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      h1 {
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>COMPSCI 121: Search Engine</h1>
+    <form method="POST">
+      <input type="text" name="query" placeholder="Please enter a query" />
+      <button type="submit">Search</button>
+    </form>
+    <hr />
+    <!-- code to display the number of results -->
+      {% if num_results %}
+      <h1>20 of {{ num_results }} Search Results</h1>
+      {% else %}
+      <h1>No Search Results</h1>
+      {% endif %}
+
+      <!-- code to display the results -->
+      {% if results %}
+      <ul>
+        {% for url in results.keys() %}
+        <li>
+            <!-- show the url, score, and snippet -->
+          <a href="{{ urljoin('https://', url) }}">{{ results[url][1] }}</a> ({{ results[url][0] }})
+          ({{results[url][2]}})
+        </li>
+        {% endfor %}
+      </ul>
+      <!-- if there are no results returned -->
+      {% else %}
+      <p>No results found.</p>
+      {% endif %}
+  </body>
+</html>

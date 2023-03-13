@@ -45,9 +45,7 @@ def search_route():
         if not num_results:
             num_results = 0
         
-        return render_template('results.html', results=results, num_results=num_results, urljoin=urljoin)
-    else:
-        return render_template('index.html')
+        return render_template('index.html', results=results, num_results=num_results, urljoin=urljoin)
 
 
 if __name__ == '__main__':

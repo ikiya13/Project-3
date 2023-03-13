@@ -170,7 +170,10 @@ def search(index, query):
             queryLemmas.append(nltk.stem.WordNetLemmatizer().lemmatize(token, get_wordnet_pos(token)))
     
     # Get the set of URLs for each token
-    postings = [set(index[token]) for token in queryLemmas]
+    postings = []
+    for token in queryLemmas:
+        if token in index:
+            postings.append(set(index[token]))
 
     #check to see if the posting list is empty
     if len(postings) == 0:
